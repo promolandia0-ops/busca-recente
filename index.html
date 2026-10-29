@@ -50,11 +50,12 @@ function run(reset){var q=$('q').value.trim();if(!q||busy)return;if(S.range==='c
  busy=true;$('more').hidden=true;var sp=document.createElement('div');sp.className='sp';$('res').after(sp);$('st').textContent=page===1?'Buscando…':$('st').textContent;
  var p={q:q,tab:S.tab,range:S.range,page:page};if(S.sort)p.sort='date';if(S.range==='custom'){if(S.from)p.from=S.from;if(S.to)p.to=S.to}
  var key=JSON.stringify(p);cur=key;var t0=Date.now(),slow=setTimeout(function(){$('st').textContent='Acordando o servidor… (pode levar ~30s na primeira vez)'},4000);
- fetch(API+'?'+new URLSearchParams(p)).then(function(r){return r.json()}).then(function(d){if(cur!==key)return;
+ var tries=0;function load(){return fetch(API+'?'+new URLSearchParams(p),{cache:'no-store'}).then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json()}).catch(function(e){if(++tries<6&&cur===key){$('st').textContent='Acordando o servidor… tentativa '+(tries+1)+'/6';return new Promise(function(ok){setTimeout(ok,5000)}).then(load)}throw e})}
+ load().then(function(d){if(cur!==key)return;
   var rs=(d.results||[]).filter(function(r){if(seen[r.url])return false;seen[r.url]=1;return S.tab!=='images'||r.img||r.thumb});
   var h=rs.map(card).join('');if(S.tab==='images')$('g').insertAdjacentHTML('beforeend',h);else $('res').insertAdjacentHTML('beforeend',h);
   var n=Object.keys(seen).length;$('st').textContent=n?n+' resultados · '+((Date.now()-t0)/1000).toFixed(1)+'s'+(d.ads_removed?' · '+d.ads_removed+' anúncios removidos':''):'Nada encontrado nesse período. Tente um período maior.';
-  $('more').hidden=!(d.results||[]).length;page++}).catch(function(){$('st').textContent='Erro ao buscar. Tente de novo.'}).finally(function(){clearTimeout(slow);busy=false;sp.remove()})}
+  $('more').hidden=!(d.results||[]).length;page++}).catch(function(e){$('st').textContent='Erro ao buscar ('+(e&&e.message||e)+'). Toque em 🔍 para tentar de novo.'}).finally(function(){clearTimeout(slow);busy=false;sp.remove()})}
 $('f').onsubmit=function(e){e.preventDefault();$('q').blur();run(true)};
 function pick(id,k){$(id).onclick=function(e){var v=e.target.dataset&&e.target.dataset.v;if(v==null)return;S[k]=v;save();paint();if(v!=='custom'||S.from||S.to)run(true)}}
 pick('per','range');pick('tabs','tab');
@@ -67,5 +68,5 @@ function closeLb(){$('lb').classList.remove('show');$('lbi').src=''}
 $('lbx').onclick=function(){history.back()};$('lb').onclick=function(e){if(e.target.id==='lb')history.back()};window.onpopstate=function(){closeLb()};
 paint();var P=new URLSearchParams(location.search).get('q');if(P){$('q').value=P;run(true)}else $('q').focus();
 fetch(API.replace('/api/search','/health')).catch(function(){});
-if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js');
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js?v=3').then(function(r){r.update()});
 </script></body></html>
