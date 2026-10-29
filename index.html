@@ -1,0 +1,40 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b0f17"><title>Busca Recente</title>
+<link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png">
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,Roboto,sans-serif;background:radial-gradient(circle at 50% -20%,#1d2b4a,#0b0f17 60%);color:#e8ecf4;min-height:100vh;padding:env(safe-area-inset-top) 16px 32px}
+.w{max-width:640px;margin:0 auto}h1{font-size:28px;margin:28px 0 4px;text-align:center}h1 span{color:#5b9cff}.sub{text-align:center;color:#8a94a8;margin:0 0 22px;font-size:14px}
+form{display:flex;gap:8px}input[type=search]{flex:1;font-size:19px;padding:16px 18px;border-radius:18px;border:1px solid #2a3650;background:#141b2b;color:#fff;outline:none}input[type=search]:focus{border-color:#5b9cff}
+button.go{border:0;border-radius:18px;background:#3b82f6;color:#fff;font-size:22px;padding:0 20px}
+.lbl{color:#8a94a8;font-size:13px;margin:18px 2px 8px;text-transform:uppercase;letter-spacing:.06em}
+.chips{display:flex;flex-wrap:wrap;gap:8px}.chip{border:1px solid #2a3650;background:#141b2b;color:#cfd6e4;padding:10px 14px;border-radius:999px;font-size:15px}
+.chip.on{background:#3b82f6;border-color:#3b82f6;color:#fff;font-weight:600}
+.dates{display:none;gap:10px;margin-top:12px}.dates.show{display:flex}.dates label{flex:1;font-size:13px;color:#8a94a8}.dates input{width:100%;margin-top:4px;padding:12px;border-radius:12px;border:1px solid #2a3650;background:#141b2b;color:#fff;font-size:16px;color-scheme:dark}
+.tog{display:flex;align-items:center;justify-content:space-between;margin-top:18px;background:#141b2b;border:1px solid #2a3650;border-radius:14px;padding:14px}.tog input{width:22px;height:22px;accent-color:#3b82f6}
+.tip{margin-top:26px;background:#111827;border:1px dashed #2a3650;border-radius:14px;padding:14px;font-size:13.5px;color:#a9b3c6;line-height:1.5}.tip code{display:block;word-break:break-all;background:#0b0f17;padding:8px;border-radius:8px;margin:6px 0;color:#9ec2ff;user-select:all}
+</style></head><body><div class="w">
+<h1>Busca <span>Recente</span></h1><p class="sub">Google só com resultados do período que você escolher</p>
+<form id="f"><input id="q" type="search" placeholder="Pesquisar…" autocomplete="off" enterkeyhint="search" autofocus><button class="go" aria-label="Buscar">🔍</button></form>
+<div class="lbl">Tipo</div><div class="chips" id="tabs">
+<button type="button" class="chip" data-v="">Tudo</button><button type="button" class="chip" data-v="nws">Notícias</button><button type="button" class="chip" data-v="vid">Vídeos</button><button type="button" class="chip" data-v="isch">Imagens</button></div>
+<div class="lbl">Período</div><div class="chips" id="per">
+<button type="button" class="chip" data-v="h">Última hora</button><button type="button" class="chip" data-v="d">24h</button><button type="button" class="chip" data-v="w">Semana</button><button type="button" class="chip" data-v="m">Mês</button><button type="button" class="chip" data-v="y">Ano</button><button type="button" class="chip" data-v="custom">📅 Data exata</button></div>
+<div class="dates" id="dates"><label>De<input type="date" id="from"></label><label>Até<input type="date" id="to"></label></div>
+<label class="tog">Ordenar por data<input type="checkbox" id="sort"></label>
+<div class="tip"><b>Dica:</b> no Chrome, vá em Configurações → Mecanismo de pesquisa → Gerenciar → Adicionar, e use este URL (usa seu último período salvo):<code id="se"></code>Atalho sugerido: <b>br</b></div>
+</div>
+<script src="builder.js"></script><script>
+var S=JSON.parse(localStorage.getItem('br')||'{}');S.period=S.period||'m';S.tab=S.tab||'';
+function save(){localStorage.setItem('br',JSON.stringify(S))}
+function paint(){[['per','period'],['tabs','tab']].forEach(function(a){document.querySelectorAll('#'+a[0]+' .chip').forEach(function(c){c.classList.toggle('on',c.dataset.v===S[a[1]])})});
+document.getElementById('dates').classList.toggle('show',S.period==='custom');from.value=S.from||'';to.value=S.to||'';sort.checked=!!S.sort}
+document.getElementById('per').onclick=function(e){var v=e.target.dataset&&e.target.dataset.v;if(v==null)return;S.period=v;save();paint()};
+document.getElementById('tabs').onclick=function(e){var v=e.target.dataset&&e.target.dataset.v;if(v==null)return;S.tab=v;save();paint()};
+from.onchange=function(){S.from=from.value;save()};to.onchange=function(){S.to=to.value;save()};sort.onchange=function(){S.sort=sort.checked;save()};
+function go(q){if(!q.trim())return;location.href=buildUrl({q:q,period:S.period,from:S.from,to:S.to,sort:S.sort,tab:S.tab})}
+document.getElementById('f').onsubmit=function(e){e.preventDefault();go(q.value)};
+document.getElementById('se').textContent=location.origin+location.pathname+'?q=%s';
+var P=new URLSearchParams(location.search).get('q');paint();if(P){q.value=P;go(P)}
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js');
+</script></body></html>
